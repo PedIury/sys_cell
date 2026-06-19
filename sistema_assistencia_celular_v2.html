@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SoftTech - Sistema de Assistencia Tecnica</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div class="app">
+<h2 class="sr-only">Sistema de gestão de OS para assistência técnica de celular</h2>
+
+<div class="header">
+  <div class="logo">📱</div>
+  <div>
+    <h1 id="hdr-nome">SoftTech</h1>
+    <p id="hdr-sub">Controle de serviço</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')">Painel</button>
+  <button class="tab" onclick="switchTab('novo')">+ Nova OS</button>
+  <button class="tab" onclick="switchTab('lista')">Ordens de serviço</button>
+  <button class="tab" onclick="switchTab('config')">Configurações</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="panel active">
+  <div class="stats" id="stats-grid"></div>
+  <p class="section-title">Últimas entradas</p>
+  <div class="table-wrap">
+    <table><thead><tr><th>OS</th><th>Cliente</th><th>Modelo</th><th>Problema</th><th>Status</th><th>Data</th></tr></thead>
+    <tbody id="recent-body"></tbody></table>
+  </div>
+</div>
+
+<!-- NOVA OS -->
+<div id="tab-novo" class="panel">
+  <p class="section-title" id="form-title">Nova ordem de serviço</p>
+  <input type="hidden" id="edit-id" value="">
+  <div class="form-grid">
+    <div class="field"><label>Nome do cliente *</label><input type="text" id="f-nome" placeholder="Ex: João da Silva"></div>
+    <div class="field"><label>Telefone do cliente *</label><input type="tel" id="f-tel" placeholder="(99) 99999-9999" oninput="maskPhone(this)"></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>Contato alternativo</label><input type="tel" id="f-tel2" placeholder="(99) 99999-9999" oninput="maskPhone(this)"></div>
+    <div class="field"><label>Responsável (se não for o dono)</label><input type="text" id="f-resp" placeholder="Ex: Maria (mãe)"></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>Marca *</label>
+      <select id="f-marca"><option value="">Selecione...</option><option>Samsung</option><option>Apple (iPhone)</option><option>Motorola</option><option>Xiaomi</option><option>LG</option><option>Huawei</option><option>Nokia</option><option>Positivo</option><option>Outro</option></select>
+    </div>
+    <div class="field"><label>Modelo do aparelho *</label><input type="text" id="f-modelo" placeholder="Ex: Galaxy A54, iPhone 13..."></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>Cor / Identificação</label><input type="text" id="f-cor" placeholder="Ex: Preto, Azul"></div>
+    <div class="field"><label>IMEI / Número de série</label><input type="text" id="f-imei" placeholder="Opcional"></div>
+  </div>
+  <div class="form-grid full">
+    <div class="field"><label>Problema relatado pelo cliente *</label><textarea id="f-problema" placeholder="Descreva o problema informado..."></textarea></div>
+  </div>
+  <div class="form-grid full">
+    <div class="field"><label>Observações técnicas</label><textarea id="f-obs" placeholder="Notas internas, diagnóstico inicial, acessórios recebidos..."></textarea></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>Valor do orçamento (R$)</label><input type="text" id="f-valor" placeholder="0,00" oninput="maskMoney(this)"></div>
+    <div class="field"><label>Status</label>
+      <select id="f-status"><option value="aguardando">Aguardando análise</option><option value="andamento">Em andamento</option><option value="pronto">Pronto para retirada</option><option value="entregue">Entregue</option></select>
+    </div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>Data de entrada</label><input type="date" id="f-data"></div>
+    <div class="field"><label>Previsão de entrega</label><input type="date" id="f-previsao"></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn" onclick="cancelEdit()">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarOS()">Salvar ordem de serviço</button>
+  </div>
+  <div id="form-msg" class="msg-box"></div>
+</div>
+
+<!-- LISTA -->
+<div id="tab-lista" class="panel">
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Buscar por nome, modelo ou OS..." oninput="renderLista()">
+    <select id="filter-status" onchange="renderLista()">
+      <option value="">Todos os status</option>
+      <option value="aguardando">Aguardando</option>
+      <option value="andamento">Em andamento</option>
+      <option value="pronto">Pronto</option>
+      <option value="entregue">Entregue</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>OS</th><th>Cliente</th><th>Telefone</th><th>Modelo</th><th>Status</th><th>Valor</th><th>Data</th><th></th></tr></thead>
+      <tbody id="lista-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div id="tab-config" class="panel">
+  <div class="config-section">
+    <h3>Dados da empresa (aparecem no recibo)</h3>
+    <div class="form-grid">
+      <div class="field"><label>Nome da empresa</label><input type="text" id="cfg-empresa" placeholder="Ex: SoftTech "></div>
+      <div class="field"><label>CNPJ / CPF</label><input type="text" id="cfg-cnpj" placeholder="00.000.000/0001-00"></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Endereço</label><input type="text" id="cfg-end" placeholder="Rua, número, bairro"></div>
+      <div class="field"><label>Cidade / UF</label><input type="text" id="cfg-cidade" placeholder="Ex: Potengi - CE"></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Telefone da loja</label><input type="tel" id="cfg-tel" placeholder="(99) 99999-9999" oninput="maskPhone(this)"></div>
+      <div class="field"><label>Mensagem de rodapé</label><input type="text" id="cfg-rodape" placeholder="Obrigado! Volte sempre."></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="salvarConfig()">Salvar configurações</button>
+    </div>
+    <div id="cfg-msg" class="msg-box msg-success"></div>
+  </div>
+
+  <div class="config-section">
+    <h3>Prévia do recibo (58mm)</h3>
+    <div class="preview-wrap">
+      <div id="recibo-preview" class="recibo-preview"></div>
+    </div>
+    <div style="margin-top:8px; display:flex; gap:8px;">
+      <button class="btn btn-print" onclick="imprimirPreview('58')">Imprimir 58mm</button>
+      <button class="btn btn-print" onclick="imprimirPreview('80')">Imprimir 80mm</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+</div>
+
+<!-- ÁREA DE IMPRESSÃO INVISÍVEL -->
+<div id="recibo-print" class="recibo-print printer-58mm" style="display:none"></div>
+
+<script src="scripts/main.js"></script>
+</body>
+</html>
